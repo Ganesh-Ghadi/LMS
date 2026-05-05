@@ -23,14 +23,17 @@ type RoleRow = {
 type RolesResponse = { data: RoleRow[] };
 
 export default function RolesPage() {
+  const { can } = usePermissions();
+  const { pushWithScrollSave } = useScrollRestoration('roles-list');
+
+  if (!can(PERMISSIONS.VIEW_ROLES)) {
+    return <div className='p-4 text-destructive'>Access Denied</div>;
+  }
+
   const { data, error, isLoading } = useSWR<RolesResponse>(
     '/api/access-control/roles',
     apiGet
   );
-
-  const { can } = usePermissions();
-  const { pushWithScrollSave } = useScrollRestoration('roles-list');
-
   const columns: Column<RoleRow>[] = [
     {
       key: 'name',
@@ -59,7 +62,7 @@ export default function RolesPage() {
       <AppCard.Header>
         <AppCard.Title>Roles</AppCard.Title>
         <AppCard.Description>Manage role permissions.</AppCard.Description>
-        {can(PERMISSIONS.EDIT_ROLES_PERMISSIONS) && (
+        {can(PERMISSIONS.CREATE_ROLES) && (
           <AppCard.Action>
             <div className='flex gap-2'>
               <AppButton

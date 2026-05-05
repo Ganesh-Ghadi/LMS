@@ -68,6 +68,25 @@ export default function RolePermissionsPage() {
     });
   }
 
+  function toggleAll(on: boolean) {
+    if (on) {
+      setSelected(new Set(allPermissions.map((p) => p.permissionName)));
+    } else {
+      setSelected(new Set());
+    }
+  }
+
+  function toggleGroup(permissionNames: string[], on: boolean) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      permissionNames.forEach((name) => {
+        if (on) next.add(name);
+        else next.delete(name);
+      });
+      return next;
+    });
+  }
+
   const loading = roleLoading || permsLoading;
 
   const allPermissions = perms?.data || [];
@@ -78,21 +97,38 @@ export default function RolePermissionsPage() {
     (p) => !groupedPermissionNames.has(p.permissionName)
   );
 
+  const isAllSelected = allPermissions.length > 0 && selected.size === allPermissions.length;
+  const isSomeSelected = selected.size > 0 && selected.size < allPermissions.length;
+
   return (
     <AppCard>
       <AppCard.Header>
-        <AppCard.Title>{role ? `Role: ${role.name}` : 'Role'}</AppCard.Title>
-        <AppCard.Description>Toggle permissions for this role.</AppCard.Description>
-        <AppCard.Action>
-          <AppButton
-            variant='secondary'
-            size='sm'
-            type='button'
-            onClick={() => router.push('/roles')}
-          >
-            Back
-          </AppButton>
-        </AppCard.Action>
+        <div className='flex items-center justify-between w-full'>
+          <div>
+            <AppCard.Title>{role ? `Role: ${role.name}` : 'Role'}</AppCard.Title>
+            <AppCard.Description>Toggle permissions for this role.</AppCard.Description>
+          </div>
+          <div className='flex items-center gap-4'>
+            {!loading && allPermissions.length > 0 && (
+              <AppCheckbox
+                label='Select All'
+                checked={isAllSelected}
+                onCheckedChange={toggleAll}
+                disabled={savingDisabled}
+              />
+            )}
+            <AppCard.Action>
+              <AppButton
+                variant='secondary'
+                size='sm'
+                type='button'
+                onClick={() => router.push('/roles')}
+              >
+                Back
+              </AppButton>
+            </AppCard.Action>
+          </div>
+        </div>
       </AppCard.Header>
 
       <AppCard.Content>
@@ -111,12 +147,27 @@ export default function RolePermissionsPage() {
                 group.permissions.includes(p.permissionName)
               );
               if (!items.length) return null;
+
+              const itemNames = items.map((i) => i.permissionName);
+              const selectedInGroup = itemNames.filter((name) => selected.has(name));
+              const isGroupAllSelected = selectedInGroup.length === itemNames.length;
+              const isGroupSomeSelected = selectedInGroup.length > 0 && selectedInGroup.length < itemNames.length;
+
               return (
                 <div
                   key={group.key}
-                  className='rounded-md border bg-muted/20 p-3 space-y-2'
+                  className='rounded-md border bg-muted/20 p-3 space-y-3'
                 >
-                  <div className='text-sm font-medium'>{group.label}</div>
+                  <div className='flex items-center justify-between border-b pb-2'>
+                    <div className='text-sm font-semibold'>{group.label}</div>
+                    <AppCheckbox
+                      label='Select Group'
+                      checked={isGroupAllSelected}
+                      onCheckedChange={(v) => toggleGroup(itemNames, v)}
+                      disabled={savingDisabled}
+                      className='text-xs'
+                    />
+                  </div>
                   <div className='grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-3'>
                     {items.map((p) => (
                       <AppCheckbox
@@ -134,8 +185,17 @@ export default function RolePermissionsPage() {
             })}
 
             {otherPermissions.length ? (
-              <div className='rounded-md border bg-muted/20 p-3 space-y-2'>
-                <div className='text-sm font-medium'>Other</div>
+              <div className='rounded-md border bg-muted/20 p-3 space-y-3'>
+                <div className='flex items-center justify-between border-b pb-2'>
+                  <div className='text-sm font-semibold'>Other</div>
+                  <AppCheckbox
+                    label='Select Group'
+                    checked={otherPermissions.every(p => selected.has(p.permissionName))}
+                    onCheckedChange={(v) => toggleGroup(otherPermissions.map(p => p.permissionName), v)}
+                    disabled={savingDisabled}
+                    className='text-xs'
+                  />
+                </div>
                 <div className='grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-3'>
                   {otherPermissions.map((p) => (
                     <AppCheckbox

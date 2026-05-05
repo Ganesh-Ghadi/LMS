@@ -1,0 +1,149 @@
+"use client";
+
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { Form } from "@/components/ui/form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { AppButton } from "@/components/common";
+import { AppCard } from "@/components/common/app-card";
+import { TextInput } from "@/components/common/text-input";
+import { FormSection, FormRow } from "@/components/common/app-form";
+import { apiPost, apiPatch } from "@/lib/api-client";
+import { toast } from "@/lib/toast";
+import { useRouter } from "next/navigation";
+import { CreateStateData, UpdateStateData } from "@/types/states";
+import { useScrollRestoration } from "@/hooks/use-scroll-restoration";
+
+export interface StateFormInitialData {
+  id?: number;
+  state?: string;
+}
+
+export interface StateFormProps {
+  mode: "create" | "edit";
+  initial?: StateFormInitialData | null;
+  onSuccess?: (result?: unknown) => void;
+  redirectOnSuccess?: string;
+  mutate?: () => Promise<any>;
+}
+
+export function StateForm({
+  mode,
+  initial,
+  onSuccess,
+  redirectOnSuccess = "/states",
+  mutate,
+}: StateFormProps) {
+  const router = useRouter();
+  const [submitting, setSubmitting] = useState(false);
+  const { backWithScrollRestore } = useScrollRestoration("states-list");
+  const [formKey, setFormKey] = useState(0);
+
+  const schema = z.object({
+    state: z.string().min(1, "State name is required"),
+  });
+
+  type FormValues = z.infer<typeof schema>;
+
+  const form = useForm<FormValues>({
+    resolver: zodResolver(schema),
+    mode: "onChange",
+    reValidateMode: "onChange",
+    defaultValues: {
+      state: initial?.state ?? "",
+    },
+  });
+
+  const { control, handleSubmit } = form;
+  const isCreate = mode === "create";
+
+  async function onSubmit(formData: FormValues) {
+    setSubmitting(true);
+    try {
+      let res;
+      if (mode === "create") {
+        const payload: CreateStateData = {
+          state: formData.state,
+        };
+        res = await apiPost("/api/states", payload);
+        toast.success("State created successfully");
+        onSuccess?.(res);
+      } else if (mode === "edit" && initial?.id) {
+        const payload: UpdateStateData = {
+          state: formData.state,
+        };
+        res = await apiPatch(`/api/states/${initial.id}`, payload);
+        toast.success("State updated successfully");
+        onSuccess?.(res);
+      }
+
+      // Invalidate and revalidate the cache
+      if (mutate) {
+        await mutate();
+      }
+
+      // Force re-render the form with updated data when coming back
+      setFormKey((prev) => prev + 1);
+
+      router.push(redirectOnSuccess);
+    } catch (err) {
+      toast.error((err as Error).message || "Failed to save state");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <Form {...form}>
+      <AppCard>
+        <AppCard.Header>
+          <AppCard.Title>
+            {isCreate ? "Create State" : "Edit State"}
+          </AppCard.Title>
+          <AppCard.Description>
+            {isCreate
+              ? "Add a new state to the master data."
+              : "Update state information."}
+          </AppCard.Description>
+        </AppCard.Header>
+        <form noValidate onSubmit={handleSubmit(onSubmit)}>
+          <AppCard.Content>
+            <FormSection legend="State Information">
+              <FormRow cols={1}>
+                <TextInput
+                  control={control}
+                  name="state"
+                  label="State Name"
+                  placeholder="Enter state name"
+                  required
+                />
+              </FormRow>
+            </FormSection>
+          </AppCard.Content>
+          <AppCard.Footer className="justify-end">
+            <AppButton
+              type="button"
+              variant="secondary"
+              onClick={() => backWithScrollRestore()}
+              disabled={submitting}
+              iconName="X"
+            >
+              Cancel
+            </AppButton>
+            <AppButton
+              type="submit"
+              iconName={isCreate ? "Plus" : "Save"}
+              isLoading={submitting}
+              disabled={submitting || !form.formState.isValid}
+            >
+              {isCreate ? "Create State" : "Save Changes"}
+            </AppButton>
+          </AppCard.Footer>
+        </form>
+      </AppCard>
+    </Form>
+  );
+}
+
+export default StateForm;

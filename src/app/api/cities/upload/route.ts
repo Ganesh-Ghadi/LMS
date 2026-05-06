@@ -41,22 +41,17 @@ export async function POST(req: NextRequest) {
     if (!data || data.length === 0) return ApiError('No data found in Excel file', 400);
 
     const errors: string[] = [];
-    const records: { city: string; stateName: string }[] = [];
+    const records: { city: string }[] = [];
 
     for (let i = 0; i < data.length; i++) {
       const row = data[i];
       const rowNum = i + 2; // header row is 1
       const city = val(row['City*'] ?? row['City'] ?? row['city']);
-      const stateName = val(row['State'] ?? row['state'] ?? row['State Name'] ?? row['stateName']);
       if (!city) {
         errors.push(`Row ${rowNum}: City is required`);
         continue;
       }
-      if (!stateName) {
-        errors.push(`Row ${rowNum}: State is required`);
-        continue;
-      }
-      records.push({ city, stateName });
+      records.push({ city });
     }
 
     if (errors.length > 0) {
@@ -65,28 +60,12 @@ export async function POST(req: NextRequest) {
     }
 
     // Normalize within file and dedupe by city name
-    const unique = new Map<string, { city: string; stateName: string }>();
+    const unique = new Map<string, { city: string }>();
     for (const r of records) {
       const key = r.city.trim();
       if (!unique.has(key)) unique.set(key, r);
     }
     const uniqueRecords = Array.from(unique.values());
-
-    // Resolve state names to IDs (optional)
-    const stateNames = Array.from(new Set(uniqueRecords.map(r => r.stateName)));
-    const states = stateNames.length
-      ? await prisma.state.findMany({ where: { state: { in: stateNames } }, select: { id: true, state: true } })
-      : [];
-    const stateMap = new Map(states.map(s => [s.state, s.id] as const));
-
-    // Check for missing state names if provided
-    const missingStates: string[] = [];
-    for (const n of stateNames) if (!stateMap.has(n)) missingStates.push(n);
-    if (missingStates.length > 0) {
-      const list = missingStates.slice(0, 5).join(', ');
-      const extra = missingStates.length > 5 ? ` and ${missingStates.length - 5} more` : '';
-      return ApiError(`State name(s) not found: ${list}${extra}. Please create the states first or correct names.`, 400);
-    }
 
     // Filter out existing cities to avoid unique conflicts
     const cityNames = uniqueRecords.map(r => r.city);
@@ -95,7 +74,7 @@ export async function POST(req: NextRequest) {
 
     const toInsert = uniqueRecords
       .filter(r => !existingSet.has(r.city))
-      .map(r => ({ city: r.city, stateId: stateMap.get(r.stateName)! }));
+      .map(r => ({ city: r.city }));
 
     if (toInsert.length === 0) {
       return Success({ message: 'No new cities to import', count: 0 }, 200);

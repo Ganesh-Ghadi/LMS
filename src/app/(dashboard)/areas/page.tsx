@@ -6,10 +6,10 @@ import { apiGet } from "@/lib/api-client";
 import { toast } from "@/lib/toast";
 import { Pagination } from "@/components/common/pagination";
 import { NonFormTextInput } from "@/components/common/non-form-text-input";
+import { AppSelect } from "@/components/common/app-select";
 import { FilterBar } from "@/components/common";
 import { AppCard } from "@/components/common/app-card";
 import { AppButton } from "@/components/common/app-button";
-import { BulkCitiesUploadDialog } from "@/components/common/bulk-cities-upload-dialog";
 import { DataTable, SortState, Column } from "@/components/common/data-table";
 import { DeleteButton } from "@/components/common/delete-button";
 import { usePermissions } from "@/hooks/use-permissions";
@@ -19,45 +19,53 @@ import { useQueryParamsState } from "@/hooks/use-query-params-state";
 import { useScrollRestoration } from "@/hooks/use-scroll-restoration";
 import { EditButton } from "@/components/common/icon-button";
 import { apiDelete } from "@/lib/api-client";
-import { CitiesResponse, City } from "@/types/cities";
+import { AreasResponse, Area } from "@/types/areas";
+import { City } from "@/types/cities";
 
-export default function CitiesPage() {
-  const { pushWithScrollSave } = useScrollRestoration("cities-list");
-  const [importOpen, setImportOpen] = useState(false);
+export default function AreasPage() {
+  const { pushWithScrollSave } = useScrollRestoration("areas-list");
 
   const [qp, setQp] = useQueryParamsState({
     page: 1,
     perPage: 10,
     search: "",
-    sort: "city",
+    cityId: "",
+    sort: "name",
     order: "asc",
   });
-  const { page, perPage, search, sort, order } = qp as unknown as {
+  const { page, perPage, search, cityId, sort, order } = qp as unknown as {
     page: number;
     perPage: number;
     search: string;
+    cityId: string;
     sort: string;
     order: "asc" | "desc";
   };
 
   const [searchDraft, setSearchDraft] = useState(search);
+  const [cityIdDraft, setCityIdDraft] = useState(cityId);
 
   useEffect(() => {
     setSearchDraft(search);
   }, [search]);
+  useEffect(() => {
+    setCityIdDraft(cityId);
+  }, [cityId]);
 
-  const filtersDirty = searchDraft !== search;
+  const filtersDirty = searchDraft !== search || cityIdDraft !== cityId;
 
   function applyFilters() {
     setQp({
       page: 1,
       search: searchDraft.trim(),
+      cityId: cityIdDraft,
     });
   }
 
   function resetFilters() {
     setSearchDraft("");
-    setQp({ page: 1, search: "" });
+    setCityIdDraft("");
+    setQp({ page: 1, search: "", cityId: "" });
   }
 
   const query = useMemo(() => {
@@ -65,20 +73,26 @@ export default function CitiesPage() {
     sp.set("page", String(page));
     sp.set("perPage", String(perPage));
     if (search) sp.set("search", search);
+    if (cityId) sp.set("cityId", cityId);
     if (sort) sp.set("sort", sort);
     if (order) sp.set("order", order);
-    return `/api/cities?${sp.toString()}`;
-  }, [page, perPage, search, sort, order]);
+    return `/api/areas?${sp.toString()}`;
+  }, [page, perPage, search, cityId, sort, order]);
 
-  const { data, error, isLoading, mutate } = useSWR<CitiesResponse>(
+  const { data, error, isLoading, mutate } = useSWR<AreasResponse>(
     query,
     apiGet
   );
 
   const { can } = usePermissions();
 
+  const { data: citiesData } = useSWR<{ data: City[] }>(
+    "/api/cities?perPage=100",
+    apiGet
+  );
+
   if (error) {
-    toast.error((error as Error).message || "Failed to load cities");
+    toast.error((error as Error).message || "Failed to load areas");
   }
 
   function toggleSort(field: string) {
@@ -89,12 +103,19 @@ export default function CitiesPage() {
     }
   }
 
-  const columns: Column<City>[] = [
+  const columns: Column<Area>[] = [
     {
-      key: "city",
-      header: "City Name",
+      key: "name",
+      header: "Area Name",
       sortable: true,
       cellClassName: "font-medium whitespace-nowrap",
+    },
+    {
+      key: "city",
+      header: "City",
+      sortable: false,
+      accessor: (r) => r.city?.city || "-",
+      cellClassName: "whitespace-nowrap",
     },
     {
       key: "createdAt",
@@ -110,8 +131,8 @@ export default function CitiesPage() {
 
   async function handleDelete(id: number) {
     try {
-      await apiDelete(`/api/cities/${id}`);
-      toast.success("City deleted");
+      await apiDelete(`/api/areas/${id}`);
+      toast.success("Area deleted");
       await mutate();
     } catch (e) {
       toast.error((e as Error).message);
@@ -121,16 +142,16 @@ export default function CitiesPage() {
   return (
     <AppCard>
       <AppCard.Header>
-        <AppCard.Title>Cities</AppCard.Title>
-        <AppCard.Description>Manage application cities.</AppCard.Description>
-        {can(PERMISSIONS.CREATE_CITIES) && (
+        <AppCard.Title>Areas</AppCard.Title>
+        <AppCard.Description>Manage application areas.</AppCard.Description>
+        {can(PERMISSIONS.CREATE_AREAS) && (
           <AppCard.Action>
             <div className="flex gap-2">
               <AppButton
                 size="sm"
                 iconName="Plus"
                 type="button"
-                onClick={() => pushWithScrollSave("/cities/new")}
+                onClick={() => pushWithScrollSave("/areas/new")}
               >
                 Add
               </AppButton>
@@ -141,21 +162,33 @@ export default function CitiesPage() {
       <AppCard.Content>
         <FilterBar title="Search & Filter">
           <NonFormTextInput
-            aria-label="Search cities"
-            placeholder="Search cities..."
+            aria-label="Search areas"
+            placeholder="Search areas..."
             value={searchDraft}
             onChange={(e) => setSearchDraft(e.target.value)}
             containerClassName="w-full"
           />
+          <AppSelect
+            value={cityIdDraft || "__all"}
+            onValueChange={(v) => setCityIdDraft(v === "__all" ? "" : v)}
+            placeholder="City"
+          >
+            <AppSelect.Item value="__all">All Cities</AppSelect.Item>
+            {citiesData?.data?.map((city: City) => (
+              <AppSelect.Item key={city.id} value={String(city.id)}>
+                {city.city}
+              </AppSelect.Item>
+            ))}
+          </AppSelect>
           <AppButton
             size="sm"
             onClick={applyFilters}
-            disabled={!filtersDirty && !searchDraft}
+            disabled={!filtersDirty && !searchDraft && !cityIdDraft}
             className="min-w-[84px]"
           >
             Filter
           </AppButton>
-          {search && (
+          {(search || cityId) && (
             <AppButton
               variant="secondary"
               size="sm"
@@ -173,29 +206,29 @@ export default function CitiesPage() {
           sort={sortState}
           onSortChange={(s) => toggleSort(s.field)}
           stickyColumns={1}
-          renderRowActions={(city) => {
+          renderRowActions={(area) => {
             if (
-              !can(PERMISSIONS.EDIT_CITIES) &&
-              !can(PERMISSIONS.DELETE_CITIES)
+              !can(PERMISSIONS.EDIT_AREAS) &&
+              !can(PERMISSIONS.DELETE_AREAS)
             )
               return null;
             return (
               <div className="flex">
-                {can(PERMISSIONS.EDIT_CITIES) && (
+                {can(PERMISSIONS.EDIT_AREAS) && (
                   <EditButton
-                    tooltip="Edit City"
-                    aria-label="Edit City"
+                    tooltip="Edit Area"
+                    aria-label="Edit Area"
                     onClick={() =>
-                      pushWithScrollSave(`/cities/${city.id}/edit`)
+                      pushWithScrollSave(`/areas/${area.id}/edit`)
                     }
                   />
                 )}
-                {can(PERMISSIONS.DELETE_CITIES) && (
+                {can(PERMISSIONS.DELETE_AREAS) && (
                   <DeleteButton
-                    onDelete={() => handleDelete(city.id)}
-                    itemLabel="city"
-                    title="Delete city?"
-                    description={`This will permanently remove ${city.city}. This action cannot be undone.`}
+                    onDelete={() => handleDelete(area.id)}
+                    itemLabel="area"
+                    title="Delete area?"
+                    description={`This will permanently remove ${area.name}. This action cannot be undone.`}
                   />
                 )}
               </div>
@@ -216,11 +249,6 @@ export default function CitiesPage() {
           disabled={isLoading}
         />
       </AppCard.Footer>
-      <BulkCitiesUploadDialog
-        open={importOpen}
-        onOpenChange={setImportOpen}
-        onUploadSuccess={() => mutate()}
-      />
     </AppCard>
   );
 }

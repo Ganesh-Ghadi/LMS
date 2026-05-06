@@ -26,6 +26,8 @@ model User {
   userRoles                 UserRole[]
   userPermissions           UserPermission[]
 
+  @@index([status])
+  @@index([createdAt])
   @@map("users")
 }
 
@@ -41,6 +43,7 @@ model RefreshToken {
 
   @@index([userId])
   @@index([expiresAt])
+  @@index([createdAt])
   @@map("refresh_tokens")
 }
 
@@ -55,6 +58,7 @@ model Role {
   permissions RolePermission[]
 
   @@index([id])
+  @@index([createdAt])
   @@map("roles")
 }
 
@@ -70,6 +74,7 @@ model Permission {
 
   @@index([permissionName])
   @@index([id])
+  @@index([createdAt])
   @@map("permissions")
 }
 
@@ -114,25 +119,89 @@ model UserPermission {
   @@map("user_permissions")
 }
 
-model State {
-  id        Int      @id @default(autoincrement())
-  state     String   @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  cities    City[]
-
-  @@map("states")
-}
-
 model City {
   id        Int      @id @default(autoincrement())
   city      String   @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  stateId   Int
-  state     State    @relation(fields: [stateId], references: [id], onDelete: Restrict)
+  areas     Area[]
 
+  @@index([createdAt])
   @@map("cities")
+}
+
+model Area {
+  id        Int      @id @default(autoincrement())
+  name      String
+  cityId    Int
+  city      City     @relation(fields: [cityId], references: [id], onDelete: Restrict)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([cityId])
+  @@index([name])
+  @@index([createdAt])
+  @@map("areas")
+}
+
+model FoldingType {
+  id              Int      @id @default(autoincrement())
+  foldingTypeName String   @unique
+  price           Decimal  @default(0) @db.Decimal(10, 2)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([foldingTypeName])
+  @@index([createdAt])
+  @@map("folding_types")
+}
+
+model Service {
+  id          Int      @id @default(autoincrement())
+  serviceName String   @unique
+  rate        Decimal  @db.Decimal(10, 2)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([serviceName])
+  @@index([createdAt])
+  @@map("services")
+}
+
+model Remark {
+  id          Int      @id @default(autoincrement())
+  remarkName  String   @unique
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([remarkName])
+  @@index([createdAt])
+  @@map("remarks")
+}
+
+model Work {
+  id          Int      @id @default(autoincrement())
+  workName    String   @unique
+  rate        Decimal  @db.Decimal(10, 2)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([workName])
+  @@index([createdAt])
+  @@map("works")
+}
+
+model Layer {
+  id               Int      @id @default(autoincrement())
+  name             String   @unique
+  description      String?  @db.Text
+  ironingRate      Decimal  @db.Decimal(10, 2)
+  dryCleaningRate  Decimal  @db.Decimal(10, 2)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([name])
+  @@index([createdAt])
+  @@map("layers")
 }

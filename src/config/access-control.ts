@@ -20,10 +20,28 @@ export const PAGE_ACCESS_RULES: { prefix: string; permissions: string[] }[] = [
   { prefix: "/cities/new", permissions: [PERMISSIONS.CREATE_CITIES] },
   { prefix: "/cities/", permissions: [PERMISSIONS.EDIT_CITIES] },
   { prefix: "/cities", permissions: [PERMISSIONS.VIEW_CITIES] },
-  // States
-  { prefix: "/states/new", permissions: [PERMISSIONS.CREATE_STATES] },
-  { prefix: "/states/", permissions: [PERMISSIONS.EDIT_STATES] },
-  { prefix: "/states", permissions: [PERMISSIONS.VIEW_STATES] },
+  // Areas
+  { prefix: "/areas/new", permissions: [PERMISSIONS.CREATE_AREAS] },
+  { prefix: "/areas/", permissions: [PERMISSIONS.EDIT_AREAS] },
+  { prefix: "/areas", permissions: [PERMISSIONS.VIEW_AREAS] },
+  // Folding Types
+  { prefix: "/folding-types", permissions: [PERMISSIONS.VIEW_FOLDING_TYPES] },
+  // Services
+  { prefix: "/services/new", permissions: [PERMISSIONS.CREATE_SERVICES] },
+  { prefix: "/services/", permissions: [PERMISSIONS.EDIT_SERVICES] },
+  { prefix: "/services", permissions: [PERMISSIONS.VIEW_SERVICES] },
+  // Remarks
+  { prefix: "/remarks/new", permissions: [PERMISSIONS.CREATE_REMARKS] },
+  { prefix: "/remarks/", permissions: [PERMISSIONS.EDIT_REMARKS] },
+  { prefix: "/remarks", permissions: [PERMISSIONS.VIEW_REMARKS] },
+  // Works
+  { prefix: "/works/new", permissions: [PERMISSIONS.CREATE_WORKS] },
+  { prefix: "/works/", permissions: [PERMISSIONS.EDIT_WORKS] },
+  { prefix: "/works", permissions: [PERMISSIONS.VIEW_WORKS] },
+  // Layers
+  { prefix: "/layers/new", permissions: [PERMISSIONS.CREATE_LAYERS] },
+  { prefix: "/layers/", permissions: [PERMISSIONS.EDIT_LAYERS] },
+  { prefix: "/layers", permissions: [PERMISSIONS.VIEW_LAYERS] },
 ];
 
 // API route path prefix -> required permissions (ALL must pass)
@@ -92,12 +110,57 @@ export const API_ACCESS_RULES: ApiAccessRule[] = [
     },
   },
   {
-    prefix: "/api/states",
+    prefix: "/api/areas",
     methods: {
-      GET: [PERMISSIONS.READ_STATES],
-      POST: [PERMISSIONS.CREATE_STATES],
-      PATCH: [PERMISSIONS.EDIT_STATES],
-      DELETE: [PERMISSIONS.DELETE_STATES],
+      GET: [PERMISSIONS.READ_AREAS],
+      POST: [PERMISSIONS.CREATE_AREAS],
+      PATCH: [PERMISSIONS.EDIT_AREAS],
+      DELETE: [PERMISSIONS.DELETE_AREAS],
+    },
+  },
+  {
+    prefix: "/api/folding-types",
+    methods: {
+      GET: [PERMISSIONS.READ_FOLDING_TYPES],
+      POST: [PERMISSIONS.CREATE_FOLDING_TYPES],
+      PATCH: [PERMISSIONS.EDIT_FOLDING_TYPES],
+      DELETE: [PERMISSIONS.DELETE_FOLDING_TYPES],
+    },
+  },
+  {
+    prefix: "/api/services",
+    methods: {
+      GET: [PERMISSIONS.READ_SERVICES],
+      POST: [PERMISSIONS.CREATE_SERVICES],
+      PATCH: [PERMISSIONS.EDIT_SERVICES],
+      DELETE: [PERMISSIONS.DELETE_SERVICES],
+    },
+  },
+  {
+    prefix: "/api/remarks",
+    methods: {
+      GET: [PERMISSIONS.READ_REMARKS],
+      POST: [PERMISSIONS.CREATE_REMARKS],
+      PATCH: [PERMISSIONS.EDIT_REMARKS],
+      DELETE: [PERMISSIONS.DELETE_REMARKS],
+    },
+  },
+  {
+    prefix: "/api/works",
+    methods: {
+      GET: [PERMISSIONS.READ_WORKS],
+      POST: [PERMISSIONS.CREATE_WORKS],
+      PATCH: [PERMISSIONS.EDIT_WORKS],
+      DELETE: [PERMISSIONS.DELETE_WORKS],
+    },
+  },
+  {
+    prefix: "/api/layers",
+    methods: {
+      GET: [PERMISSIONS.READ_LAYERS],
+      POST: [PERMISSIONS.CREATE_LAYERS],
+      PATCH: [PERMISSIONS.EDIT_LAYERS],
+      DELETE: [PERMISSIONS.DELETE_LAYERS],
     },
   },
 ];

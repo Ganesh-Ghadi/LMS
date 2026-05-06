@@ -12,17 +12,17 @@ export default function InternalDashboard() {
 
   const cards = [
     {
-      title: "States",
-      description: "Manage states and regions",
-      href: "/states",
+      title: "Areas",
+      description: "Manage areas within cities",
+      href: "/areas",
       icon: Map,
-      permission: PERMISSIONS.VIEW_STATES,
+      permission: PERMISSIONS.VIEW_AREAS,
       color: "text-blue-600",
       bgColor: "bg-blue-500/10",
     },
     {
       title: "Cities",
-      description: "Manage cities within states",
+      description: "Manage application cities",
       href: "/cities",
       icon: MapPin,
       permission: PERMISSIONS.VIEW_CITIES,

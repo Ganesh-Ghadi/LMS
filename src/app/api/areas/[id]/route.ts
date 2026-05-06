@@ -5,44 +5,52 @@ import { guardApiAccess } from "@/lib/access-guard";
 import { z } from "zod";
 
 const updateSchema = z.object({
-  city: z.string().min(1, "City name is required").optional(),
+  name: z.string().min(1, "Area name is required").optional(),
+  cityId: z.number().int().optional(),
 });
 
-// GET /api/cities/[id] - Get single city
+// GET /api/areas/[id] - Get single area
 export async function GET(req: NextRequest, context: { params: Promise<{ id: string }> }) {
   const auth = await guardApiAccess(req);
   if (auth.ok === false) return auth.response;
 
   try {
     const id = parseInt((await context.params).id);
-    if (isNaN(id)) return BadRequest("Invalid city ID");
+    if (isNaN(id)) return BadRequest("Invalid area ID");
 
-    const city = await prisma.city.findUnique({
+    const area = await prisma.area.findUnique({
       where: { id },
       select: { 
         id: true, 
-        city: true, 
+        name: true, 
         createdAt: true,
         updatedAt: true,
+        cityId: true,
+        city: {
+          select: {
+            id: true,
+            city: true
+          }
+        }
       }
     });
 
-    if (!city) return NotFound('City not found');
-    return Success(city);
+    if (!area) return NotFound('Area not found');
+    return Success(area);
   } catch (error) {
-    console.error("Get city error:", error);
-    return Error("Failed to fetch city");
+    console.error("Get area error:", error);
+    return Error("Failed to fetch area");
   }
 }
 
-// PATCH /api/cities/[id] - Update city
+// PATCH /api/areas/[id] - Update area
 export async function PATCH(req: NextRequest, context: { params: Promise<{ id: string }> }) {
   const auth = await guardApiAccess(req);
   if (auth.ok === false) return auth.response;
 
   try {
     const id = parseInt((await context.params).id);
-    if (isNaN(id)) return BadRequest("Invalid city ID");
+    if (isNaN(id)) return BadRequest("Invalid area ID");
 
     const body = await req.json();
     const updateData = updateSchema.parse(body);
@@ -51,14 +59,21 @@ export async function PATCH(req: NextRequest, context: { params: Promise<{ id: s
       return BadRequest("No valid fields to update");
     }
 
-    const updated = await prisma.city.update({
+    const updated = await prisma.area.update({
       where: { id },
       data: updateData,
       select: { 
         id: true, 
-        city: true, 
+        name: true, 
         createdAt: true,
-        updatedAt: true
+        updatedAt: true,
+        cityId: true,
+        city: {
+          select: {
+            id: true,
+            city: true
+          }
+        }
       }
     });
 
@@ -67,38 +82,38 @@ export async function PATCH(req: NextRequest, context: { params: Promise<{ id: s
     if (error instanceof z.ZodError) {
       return BadRequest(error.errors);
     }
-    if (error.code === 'P2025') return NotFound('City not found');
+    if (error.code === 'P2025') return NotFound('Area not found');
     if (error.code === 'P2002') {
-      return Error('City already exists', 409);
+      return Error('Area already exists in this city', 409);
     }
-    console.error("Update city error:", error);
-    return Error("Failed to update city");
+    console.error("Update area error:", error);
+    return Error("Failed to update area");
   }
 }
 
-// DELETE /api/cities/[id] - Delete city
+// DELETE /api/areas/[id] - Delete area
 export async function DELETE(req: NextRequest, context: { params: Promise<{ id: string }> }) {
   const auth = await guardApiAccess(req);
   if (auth.ok === false) return auth.response;
 
   try {
     const id = parseInt((await context.params).id);
-    if (isNaN(id)) return BadRequest("Invalid city ID");
+    if (isNaN(id)) return BadRequest("Invalid area ID");
 
-    await prisma.city.delete({
+    await prisma.area.delete({
       where: { id }
     });
 
-    return Success({ message: "City deleted successfully" });
+    return Success({ message: "Area deleted successfully" });
   } catch (error: any) {
-    if (error.code === 'P2025') return NotFound('City not found');
+    if (error.code === 'P2025') return NotFound('Area not found');
     if (error.code === 'P2003') {
       return Error(
-        'Cannot delete this city because it is in use by other records. Please remove those links and try again.',
+        'Cannot delete this area because it is in use by other records.',
         409
       );
     }
-    console.error("Delete city error:", error);
-    return Error("Failed to delete city");
+    console.error("Delete area error:", error);
+    return Error("Failed to delete area");
   }
 }

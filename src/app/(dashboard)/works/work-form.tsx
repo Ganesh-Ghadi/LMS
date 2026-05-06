@@ -13,34 +13,39 @@ import { apiPost, apiPatch } from "@/lib/api-client";
 import { toast } from "@/lib/toast";
 import { useRouter } from "next/navigation";
 import { useScrollRestoration } from "@/hooks/use-scroll-restoration";
-import { CreateCityData, UpdateCityData } from "@/types/cities";
 
-export interface CityFormInitialData {
+export interface WorkFormInitialData {
   id?: number;
-  city?: string;
+  workName?: string;
+  rate?: number | string;
 }
 
-export interface CityFormProps {
+export interface WorkFormProps {
   mode: "create" | "edit";
-  initial?: CityFormInitialData | null;
+  initial?: WorkFormInitialData | null;
   onSuccess?: (result?: unknown) => void;
   redirectOnSuccess?: string;
   mutate?: () => Promise<any>;
 }
 
-export function CityForm({
+export function WorkForm({
   mode,
   initial,
   onSuccess,
-  redirectOnSuccess = "/cities",
+  redirectOnSuccess = "/works",
   mutate,
-}: CityFormProps) {
+}: WorkFormProps) {
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
-  const { backWithScrollRestore } = useScrollRestoration("cities-list");
+  const { backWithScrollRestore } = useScrollRestoration("works-list");
 
   const schema = z.object({
-    city: z.string().min(1, "City name is required"),
+    workName: z.string().min(1, "Work name is required"),
+    rate: z.string()
+      .min(1, "Rate is required")
+      .refine((val) => !isNaN(Number(val)) && Number(val) > 0, {
+        message: "Rate must be a number greater than 0",
+      }),
   });
 
   type FormValues = z.infer<typeof schema>;
@@ -50,7 +55,8 @@ export function CityForm({
     mode: "onChange",
     reValidateMode: "onChange",
     defaultValues: {
-      city: initial?.city ?? "",
+      workName: initial?.workName ?? "",
+      rate: initial?.rate ? String(initial.rate) : "",
     },
   });
 
@@ -61,19 +67,18 @@ export function CityForm({
     setSubmitting(true);
     try {
       let res;
+      const payload = {
+        workName: formData.workName,
+        rate: Number(formData.rate),
+      };
+
       if (mode === "create") {
-        const payload: CreateCityData = {
-          city: formData.city,
-        };
-        res = await apiPost("/api/cities", payload);
-        toast.success("City created successfully");
+        res = await apiPost("/api/works", payload);
+        toast.success("Work created successfully");
         onSuccess?.(res);
       } else if (mode === "edit" && initial?.id) {
-        const payload: UpdateCityData = {
-          city: formData.city,
-        };
-        res = await apiPatch(`/api/cities/${initial.id}`, payload);
-        toast.success("City updated successfully");
+        res = await apiPatch(`/api/works/${initial.id}`, payload);
+        toast.success("Work updated successfully");
         onSuccess?.(res);
       }
 
@@ -83,10 +88,20 @@ export function CityForm({
 
       router.push(redirectOnSuccess);
     } catch (err) {
-      toast.error((err as Error).message || "Failed to save city");
+      toast.error((err as Error).message || "Failed to save work");
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleRateChange = (value: string) => {
+    // Allow only numbers and up to 2 decimal places
+    const regex = /^\d*\.?\d{0,2}$/;
+    if (value === "" || regex.test(value)) {
+      return value;
+    }
+    // Return current value from form if new value is invalid
+    return form.getValues("rate");
   };
 
   return (
@@ -94,24 +109,32 @@ export function CityForm({
       <AppCard>
         <AppCard.Header>
           <AppCard.Title>
-            {isCreate ? "Create City" : "Edit City"}
+            {isCreate ? "Create Work" : "Edit Work"}
           </AppCard.Title>
           <AppCard.Description>
             {isCreate
-              ? "Add a new city to the master data."
-              : "Update city information."}
+              ? "Add a new work to the master data."
+              : "Update work information."}
           </AppCard.Description>
         </AppCard.Header>
         <form noValidate onSubmit={handleSubmit(onSubmit)}>
           <AppCard.Content>
-            <FormSection legend="City Information">
-              <FormRow cols={1}>
+            <FormSection legend="Work Information">
+              <FormRow cols={2}>
                 <TextInput
                   control={control}
-                  name="city"
-                  label="City Name"
-                  placeholder="Enter city name"
+                  name="workName"
+                  label="Work Name"
+                  placeholder="Enter work name"
                   required
+                />
+                <TextInput
+                  control={control}
+                  name="rate"
+                  label="Rate"
+                  placeholder="Enter rate"
+                  required
+                  onValueChange={handleRateChange}
                 />
               </FormRow>
             </FormSection>
@@ -132,7 +155,7 @@ export function CityForm({
               isLoading={submitting}
               disabled={submitting || !form.formState.isValid}
             >
-              {isCreate ? "Create City" : "Save Changes"}
+              {isCreate ? "Create Work" : "Save Changes"}
             </AppButton>
           </AppCard.Footer>
         </form>
@@ -141,4 +164,4 @@ export function CityForm({
   );
 }
 
-export default CityForm;
+export default WorkForm;

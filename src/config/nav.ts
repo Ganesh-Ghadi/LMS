@@ -9,6 +9,10 @@ import {
   MapPin,
   Map,
   Database,
+  WashingMachine,
+  MessageSquare,
+  Briefcase,
+  Layers,
 } from "lucide-react";
 import type { ComponentType } from "react";
 
@@ -45,16 +49,46 @@ export const NAV_ITEMS: NavItem[] = [
     icon: Database,
     children: [
       {
-        title: "States",
-        href: "/states",
-        icon: Map,
-        permission: PERMISSIONS.VIEW_STATES,
-      },
-      {
         title: "Cities",
         href: "/cities",
         icon: MapPin,
         permission: PERMISSIONS.VIEW_CITIES,
+      },
+      {
+        title: "Areas",
+        href: "/areas",
+        icon: Map,
+        permission: PERMISSIONS.VIEW_AREAS,
+      },
+      {
+        title: "Folding Types",
+        href: "/folding-types",
+        icon: Database,
+        permission: PERMISSIONS.VIEW_FOLDING_TYPES,
+      },
+      {
+        title: "Services",
+        href: "/services",
+        icon: WashingMachine,
+        permission: PERMISSIONS.VIEW_SERVICES,
+      },
+      {
+        title: "Remarks",
+        href: "/remarks",
+        icon: MessageSquare,
+        permission: PERMISSIONS.VIEW_REMARKS,
+      },
+      {
+        title: "Works",
+        href: "/works",
+        icon: Briefcase,
+        permission: PERMISSIONS.VIEW_WORKS,
+      },
+      {
+        title: "Layers",
+        href: "/layers",
+        icon: Layers,
+        permission: PERMISSIONS.VIEW_LAYERS,
       },
     ],
   },

@@ -6,10 +6,11 @@ import { paginate } from "@/lib/paginate";
 import { z } from "zod";
 
 const createSchema = z.object({
-  city: z.string().min(1, "City name is required"),
+  serviceName: z.string().min(1, "Service name is required"),
+  rate: z.coerce.number().min(0.01, "Rate must be greater than 0"),
 });
 
-// GET /api/cities?search=&page=1&perPage=10&sort=city&order=asc
+// GET /api/services?search=&page=1&perPage=10&sort=serviceName&order=asc
 export async function GET(req: NextRequest) {
   const auth = await guardApiAccess(req);
   if (auth.ok === false) return auth.response;
@@ -19,34 +20,35 @@ export async function GET(req: NextRequest) {
     const page = Math.max(1, Number(searchParams.get("page")) || 1);
     const perPage = Math.min(100, Math.max(1, Number(searchParams.get("perPage")) || 10));
     const search = searchParams.get("search")?.trim() || "";
-    const sort = (searchParams.get("sort") || "city") as string;
+    const sort = (searchParams.get("sort") || "serviceName") as string;
     const order = (searchParams.get("order") === "desc" ? "desc" : "asc") as "asc" | "desc";
 
     // Build dynamic filter
-    type CityWhere = {
-      city?: { contains: string };
+    type ServiceWhere = {
+      serviceName?: { contains: string };
     };
-    const where: CityWhere = {};
+    const where: ServiceWhere = {};
     
     if (search) {
-      where.city = { contains: search };
+      where.serviceName = { contains: search };
     }
 
     // Allow listed sortable fields only
-    const sortableFields = new Set(["city", "createdAt"]);
+    const sortableFields = new Set(["serviceName", "rate", "createdAt"]);
     const orderBy: Record<string, "asc" | "desc"> = sortableFields.has(sort) 
       ? { [sort]: order } 
-      : { city: "asc" };
+      : { serviceName: "asc" };
 
     const result = await paginate({
-      model: prisma.city as any,
+      model: prisma.service as any,
       where,
       orderBy,
       page,
       perPage,
       select: { 
         id: true, 
-        city: true, 
+        serviceName: true, 
+        rate: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -54,27 +56,29 @@ export async function GET(req: NextRequest) {
 
     return Success(result);
   } catch (error) {
-    console.error("Get cities error:", error);
-    return Error("Failed to fetch cities");
+    console.error("Get services error:", error);
+    return Error("Failed to fetch services");
   }
 }
 
-// POST /api/cities - Create new city
+// POST /api/services - Create new service
 export async function POST(req: NextRequest) {
   const auth = await guardApiAccess(req);
   if (auth.ok === false) return auth.response;
 
   try {
     const body = await req.json();
-    const { city } = createSchema.parse(body);
+    const { serviceName, rate } = createSchema.parse(body);
     
-    const created = await prisma.city.create({
+    const created = await prisma.service.create({
       data: { 
-        city,
+        serviceName,
+        rate 
       },
       select: { 
         id: true, 
-        city: true, 
+        serviceName: true, 
+        rate: true,
         createdAt: true,
       }
     });
@@ -85,9 +89,9 @@ export async function POST(req: NextRequest) {
       return BadRequest(error.errors);
     }
     if (error.code === 'P2002') {
-      return Error('City already exists', 409);
+      return Error('Service name already exists', 409);
     }
-    console.error("Create city error:", error);
-    return Error("Failed to create city");
+    console.error("Create service error:", error);
+    return Error("Failed to create service");
   }
 }

@@ -5,44 +5,44 @@ import { guardApiAccess } from "@/lib/access-guard";
 import { z } from "zod";
 
 const updateSchema = z.object({
-  city: z.string().min(1, "City name is required").optional(),
+  remarkName: z.string().min(1, "Remark name is required").optional(),
 });
 
-// GET /api/cities/[id] - Get single city
+// GET /api/remarks/[id] - Get single remark
 export async function GET(req: NextRequest, context: { params: Promise<{ id: string }> }) {
   const auth = await guardApiAccess(req);
   if (auth.ok === false) return auth.response;
 
   try {
     const id = parseInt((await context.params).id);
-    if (isNaN(id)) return BadRequest("Invalid city ID");
+    if (isNaN(id)) return BadRequest("Invalid remark ID");
 
-    const city = await prisma.city.findUnique({
+    const remark = await prisma.remark.findUnique({
       where: { id },
       select: { 
         id: true, 
-        city: true, 
+        remarkName: true, 
         createdAt: true,
         updatedAt: true,
       }
     });
 
-    if (!city) return NotFound('City not found');
-    return Success(city);
+    if (!remark) return NotFound('Remark not found');
+    return Success(remark);
   } catch (error) {
-    console.error("Get city error:", error);
-    return Error("Failed to fetch city");
+    console.error("Get remark error:", error);
+    return Error("Failed to fetch remark");
   }
 }
 
-// PATCH /api/cities/[id] - Update city
+// PATCH /api/remarks/[id] - Update remark
 export async function PATCH(req: NextRequest, context: { params: Promise<{ id: string }> }) {
   const auth = await guardApiAccess(req);
   if (auth.ok === false) return auth.response;
 
   try {
     const id = parseInt((await context.params).id);
-    if (isNaN(id)) return BadRequest("Invalid city ID");
+    if (isNaN(id)) return BadRequest("Invalid remark ID");
 
     const body = await req.json();
     const updateData = updateSchema.parse(body);
@@ -51,12 +51,12 @@ export async function PATCH(req: NextRequest, context: { params: Promise<{ id: s
       return BadRequest("No valid fields to update");
     }
 
-    const updated = await prisma.city.update({
+    const updated = await prisma.remark.update({
       where: { id },
       data: updateData,
       select: { 
         id: true, 
-        city: true, 
+        remarkName: true, 
         createdAt: true,
         updatedAt: true
       }
@@ -67,38 +67,32 @@ export async function PATCH(req: NextRequest, context: { params: Promise<{ id: s
     if (error instanceof z.ZodError) {
       return BadRequest(error.errors);
     }
-    if (error.code === 'P2025') return NotFound('City not found');
+    if (error.code === 'P2025') return NotFound('Remark not found');
     if (error.code === 'P2002') {
-      return Error('City already exists', 409);
+      return Error('Remark already exists', 409);
     }
-    console.error("Update city error:", error);
-    return Error("Failed to update city");
+    console.error("Update remark error:", error);
+    return Error("Failed to update remark");
   }
 }
 
-// DELETE /api/cities/[id] - Delete city
+// DELETE /api/remarks/[id] - Delete remark
 export async function DELETE(req: NextRequest, context: { params: Promise<{ id: string }> }) {
   const auth = await guardApiAccess(req);
   if (auth.ok === false) return auth.response;
 
   try {
     const id = parseInt((await context.params).id);
-    if (isNaN(id)) return BadRequest("Invalid city ID");
+    if (isNaN(id)) return BadRequest("Invalid remark ID");
 
-    await prisma.city.delete({
+    await prisma.remark.delete({
       where: { id }
     });
 
-    return Success({ message: "City deleted successfully" });
+    return Success({ message: "Remark deleted successfully" });
   } catch (error: any) {
-    if (error.code === 'P2025') return NotFound('City not found');
-    if (error.code === 'P2003') {
-      return Error(
-        'Cannot delete this city because it is in use by other records. Please remove those links and try again.',
-        409
-      );
-    }
-    console.error("Delete city error:", error);
-    return Error("Failed to delete city");
+    if (error.code === 'P2025') return NotFound('Remark not found');
+    console.error("Delete remark error:", error);
+    return Error("Failed to delete remark");
   }
 }

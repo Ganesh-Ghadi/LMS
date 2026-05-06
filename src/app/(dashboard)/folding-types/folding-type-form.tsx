@@ -13,34 +13,39 @@ import { apiPost, apiPatch } from "@/lib/api-client";
 import { toast } from "@/lib/toast";
 import { useRouter } from "next/navigation";
 import { useScrollRestoration } from "@/hooks/use-scroll-restoration";
-import { CreateCityData, UpdateCityData } from "@/types/cities";
 
-export interface CityFormInitialData {
+export interface FoldingTypeFormInitialData {
   id?: number;
-  city?: string;
+  foldingTypeName?: string;
+  price?: number;
 }
 
-export interface CityFormProps {
+export interface FoldingTypeFormProps {
   mode: "create" | "edit";
-  initial?: CityFormInitialData | null;
+  initial?: FoldingTypeFormInitialData | null;
   onSuccess?: (result?: unknown) => void;
   redirectOnSuccess?: string;
   mutate?: () => Promise<any>;
 }
 
-export function CityForm({
+export function FoldingTypeForm({
   mode,
   initial,
   onSuccess,
-  redirectOnSuccess = "/cities",
+  redirectOnSuccess = "/folding-types",
   mutate,
-}: CityFormProps) {
+}: FoldingTypeFormProps) {
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
-  const { backWithScrollRestore } = useScrollRestoration("cities-list");
+  const { backWithScrollRestore } = useScrollRestoration("folding-types-list");
 
   const schema = z.object({
-    city: z.string().min(1, "City name is required"),
+    foldingTypeName: z.string().min(1, "Folding type name is required"),
+    price: z.string()
+      .min(1, "Price is required")
+      .refine((val) => !isNaN(Number(val)) && Number(val) > 0, {
+        message: "Price must be a number greater than 0",
+      }),
   });
 
   type FormValues = z.infer<typeof schema>;
@@ -50,7 +55,8 @@ export function CityForm({
     mode: "onChange",
     reValidateMode: "onChange",
     defaultValues: {
-      city: initial?.city ?? "",
+      foldingTypeName: initial?.foldingTypeName ?? "",
+      price: initial?.price ? String(initial.price) : "",
     },
   });
 
@@ -61,19 +67,18 @@ export function CityForm({
     setSubmitting(true);
     try {
       let res;
+      const payload = {
+        foldingTypeName: formData.foldingTypeName,
+        price: Number(formData.price),
+      };
+
       if (mode === "create") {
-        const payload: CreateCityData = {
-          city: formData.city,
-        };
-        res = await apiPost("/api/cities", payload);
-        toast.success("City created successfully");
+        res = await apiPost("/api/folding-types", payload);
+        toast.success("Folding type created successfully");
         onSuccess?.(res);
       } else if (mode === "edit" && initial?.id) {
-        const payload: UpdateCityData = {
-          city: formData.city,
-        };
-        res = await apiPatch(`/api/cities/${initial.id}`, payload);
-        toast.success("City updated successfully");
+        res = await apiPatch(`/api/folding-types/${initial.id}`, payload);
+        toast.success("Folding type updated successfully");
         onSuccess?.(res);
       }
 
@@ -83,10 +88,20 @@ export function CityForm({
 
       router.push(redirectOnSuccess);
     } catch (err) {
-      toast.error((err as Error).message || "Failed to save city");
+      toast.error((err as Error).message || "Failed to save folding type");
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handlePriceChange = (value: string) => {
+    // Allow only numbers and up to 2 decimal places
+    const regex = /^\d*\.?\d{0,2}$/;
+    if (value === "" || regex.test(value)) {
+      return value;
+    }
+    // Return current value from form if new value is invalid
+    return form.getValues("price");
   };
 
   return (
@@ -94,24 +109,32 @@ export function CityForm({
       <AppCard>
         <AppCard.Header>
           <AppCard.Title>
-            {isCreate ? "Create City" : "Edit City"}
+            {isCreate ? "Create Folding Type" : "Edit Folding Type"}
           </AppCard.Title>
           <AppCard.Description>
             {isCreate
-              ? "Add a new city to the master data."
-              : "Update city information."}
+              ? "Add a new folding type to the master data."
+              : "Update folding type information."}
           </AppCard.Description>
         </AppCard.Header>
         <form noValidate onSubmit={handleSubmit(onSubmit)}>
           <AppCard.Content>
-            <FormSection legend="City Information">
-              <FormRow cols={1}>
+            <FormSection legend="Folding Type Information">
+              <FormRow cols={2}>
                 <TextInput
                   control={control}
-                  name="city"
-                  label="City Name"
-                  placeholder="Enter city name"
+                  name="foldingTypeName"
+                  label="Folding Type Name"
+                  placeholder="Enter folding type name"
                   required
+                />
+                <TextInput
+                  control={control}
+                  name="price"
+                  label="Price"
+                  placeholder="Enter price"
+                  required
+                  onValueChange={handlePriceChange}
                 />
               </FormRow>
             </FormSection>
@@ -132,7 +155,7 @@ export function CityForm({
               isLoading={submitting}
               disabled={submitting || !form.formState.isValid}
             >
-              {isCreate ? "Create City" : "Save Changes"}
+              {isCreate ? "Create Folding Type" : "Save Changes"}
             </AppButton>
           </AppCard.Footer>
         </form>
@@ -141,4 +164,4 @@ export function CityForm({
   );
 }
 
-export default CityForm;
+export default FoldingTypeForm;

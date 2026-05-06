@@ -4,11 +4,6 @@ export interface City {
   status: boolean;
   createdAt: string;
   updatedAt: string;
-  stateId?: number | null;
-  state?: {
-    id: number;
-    state: string;
-  } | null;
 }
 
 export interface CitiesResponse {
@@ -21,10 +16,8 @@ export interface CitiesResponse {
 
 export interface CreateCityData {
   city: string;
-  stateId?: number | null;
 }
 
 export interface UpdateCityData {
   city?: string;
-  stateId?: number | null;
 }

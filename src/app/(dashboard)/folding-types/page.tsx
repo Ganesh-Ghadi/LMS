@@ -9,7 +9,6 @@ import { NonFormTextInput } from "@/components/common/non-form-text-input";
 import { FilterBar } from "@/components/common";
 import { AppCard } from "@/components/common/app-card";
 import { AppButton } from "@/components/common/app-button";
-import { BulkCitiesUploadDialog } from "@/components/common/bulk-cities-upload-dialog";
 import { DataTable, SortState, Column } from "@/components/common/data-table";
 import { DeleteButton } from "@/components/common/delete-button";
 import { usePermissions } from "@/hooks/use-permissions";
@@ -19,17 +18,16 @@ import { useQueryParamsState } from "@/hooks/use-query-params-state";
 import { useScrollRestoration } from "@/hooks/use-scroll-restoration";
 import { EditButton } from "@/components/common/icon-button";
 import { apiDelete } from "@/lib/api-client";
-import { CitiesResponse, City } from "@/types/cities";
+import { FoldingTypesResponse, FoldingType } from "@/types/folding-types";
 
-export default function CitiesPage() {
-  const { pushWithScrollSave } = useScrollRestoration("cities-list");
-  const [importOpen, setImportOpen] = useState(false);
+export default function FoldingTypesPage() {
+  const { pushWithScrollSave } = useScrollRestoration("folding-types-list");
 
   const [qp, setQp] = useQueryParamsState({
     page: 1,
     perPage: 10,
     search: "",
-    sort: "city",
+    sort: "foldingTypeName",
     order: "asc",
   });
   const { page, perPage, search, sort, order } = qp as unknown as {
@@ -67,10 +65,10 @@ export default function CitiesPage() {
     if (search) sp.set("search", search);
     if (sort) sp.set("sort", sort);
     if (order) sp.set("order", order);
-    return `/api/cities?${sp.toString()}`;
+    return `/api/folding-types?${sp.toString()}`;
   }, [page, perPage, search, sort, order]);
 
-  const { data, error, isLoading, mutate } = useSWR<CitiesResponse>(
+  const { data, error, isLoading, mutate } = useSWR<FoldingTypesResponse>(
     query,
     apiGet
   );
@@ -78,7 +76,7 @@ export default function CitiesPage() {
   const { can } = usePermissions();
 
   if (error) {
-    toast.error((error as Error).message || "Failed to load cities");
+    toast.error((error as Error).message || "Failed to load folding types");
   }
 
   function toggleSort(field: string) {
@@ -89,12 +87,19 @@ export default function CitiesPage() {
     }
   }
 
-  const columns: Column<City>[] = [
+  const columns: Column<FoldingType>[] = [
     {
-      key: "city",
-      header: "City Name",
+      key: "foldingTypeName",
+      header: "Folding Type Name",
       sortable: true,
       cellClassName: "font-medium whitespace-nowrap",
+    },
+    {
+      key: "price",
+      header: "Price",
+      sortable: true,
+      cellClassName: "whitespace-nowrap",
+      accessor: (r) => Number(r.price).toFixed(2),
     },
     {
       key: "createdAt",
@@ -110,8 +115,8 @@ export default function CitiesPage() {
 
   async function handleDelete(id: number) {
     try {
-      await apiDelete(`/api/cities/${id}`);
-      toast.success("City deleted");
+      await apiDelete(`/api/folding-types/${id}`);
+      toast.success("Folding type deleted");
       await mutate();
     } catch (e) {
       toast.error((e as Error).message);
@@ -121,16 +126,16 @@ export default function CitiesPage() {
   return (
     <AppCard>
       <AppCard.Header>
-        <AppCard.Title>Cities</AppCard.Title>
-        <AppCard.Description>Manage application cities.</AppCard.Description>
-        {can(PERMISSIONS.CREATE_CITIES) && (
+        <AppCard.Title>Folding Types</AppCard.Title>
+        <AppCard.Description>Manage folding type master data.</AppCard.Description>
+        {can(PERMISSIONS.CREATE_FOLDING_TYPES) && (
           <AppCard.Action>
             <div className="flex gap-2">
               <AppButton
                 size="sm"
                 iconName="Plus"
                 type="button"
-                onClick={() => pushWithScrollSave("/cities/new")}
+                onClick={() => pushWithScrollSave("/folding-types/new")}
               >
                 Add
               </AppButton>
@@ -139,10 +144,10 @@ export default function CitiesPage() {
         )}
       </AppCard.Header>
       <AppCard.Content>
-        <FilterBar title="Search & Filter">
+        <FilterBar title="Search">
           <NonFormTextInput
-            aria-label="Search cities"
-            placeholder="Search cities..."
+            aria-label="Search folding types"
+            placeholder="Search folding types..."
             value={searchDraft}
             onChange={(e) => setSearchDraft(e.target.value)}
             containerClassName="w-full"
@@ -173,29 +178,29 @@ export default function CitiesPage() {
           sort={sortState}
           onSortChange={(s) => toggleSort(s.field)}
           stickyColumns={1}
-          renderRowActions={(city) => {
+          renderRowActions={(ft) => {
             if (
-              !can(PERMISSIONS.EDIT_CITIES) &&
-              !can(PERMISSIONS.DELETE_CITIES)
+              !can(PERMISSIONS.EDIT_FOLDING_TYPES) &&
+              !can(PERMISSIONS.DELETE_FOLDING_TYPES)
             )
               return null;
             return (
               <div className="flex">
-                {can(PERMISSIONS.EDIT_CITIES) && (
+                {can(PERMISSIONS.EDIT_FOLDING_TYPES) && (
                   <EditButton
-                    tooltip="Edit City"
-                    aria-label="Edit City"
+                    tooltip="Edit Folding Type"
+                    aria-label="Edit Folding Type"
                     onClick={() =>
-                      pushWithScrollSave(`/cities/${city.id}/edit`)
+                      pushWithScrollSave(`/folding-types/${ft.id}/edit`)
                     }
                   />
                 )}
-                {can(PERMISSIONS.DELETE_CITIES) && (
+                {can(PERMISSIONS.DELETE_FOLDING_TYPES) && (
                   <DeleteButton
-                    onDelete={() => handleDelete(city.id)}
-                    itemLabel="city"
-                    title="Delete city?"
-                    description={`This will permanently remove ${city.city}. This action cannot be undone.`}
+                    onDelete={() => handleDelete(ft.id)}
+                    itemLabel="folding type"
+                    title="Delete folding type?"
+                    description={`This will permanently remove ${ft.foldingTypeName}. This action cannot be undone.`}
                   />
                 )}
               </div>
@@ -216,11 +221,6 @@ export default function CitiesPage() {
           disabled={isLoading}
         />
       </AppCard.Footer>
-      <BulkCitiesUploadDialog
-        open={importOpen}
-        onOpenChange={setImportOpen}
-        onUploadSuccess={() => mutate()}
-      />
     </AppCard>
   );
 }

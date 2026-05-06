@@ -23,16 +23,9 @@ export default function EditCityPage() {
 
   const initialData = useMemo<CityFormInitialData | null>(() => {
     if (!city) return null;
-    if (city.stateId === null || city.stateId === undefined) {
-      // Handle the case where stateId is null/undefined
-      // You might want to set a default value or throw an error
-      console.warn("City has no stateId");
-      return null;
-    }
     return {
       id: city.id,
       city: city.city,
-      stateId: city.stateId, // Now we know this is a number
     };
   }, [city]);
 
@@ -47,7 +40,7 @@ export default function EditCityPage() {
     );
   }
 
-  if (isLoading || !initialData) {
+  if (isLoading || (id && !city)) {
     return <div className="p-6">Loading...</div>;
   }
 

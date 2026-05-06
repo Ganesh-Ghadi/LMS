@@ -9,7 +9,6 @@ import { NonFormTextInput } from "@/components/common/non-form-text-input";
 import { FilterBar } from "@/components/common";
 import { AppCard } from "@/components/common/app-card";
 import { AppButton } from "@/components/common/app-button";
-import { BulkCitiesUploadDialog } from "@/components/common/bulk-cities-upload-dialog";
 import { DataTable, SortState, Column } from "@/components/common/data-table";
 import { DeleteButton } from "@/components/common/delete-button";
 import { usePermissions } from "@/hooks/use-permissions";
@@ -19,17 +18,16 @@ import { useQueryParamsState } from "@/hooks/use-query-params-state";
 import { useScrollRestoration } from "@/hooks/use-scroll-restoration";
 import { EditButton } from "@/components/common/icon-button";
 import { apiDelete } from "@/lib/api-client";
-import { CitiesResponse, City } from "@/types/cities";
+import { LayersResponse, Layer } from "@/types/layers";
 
-export default function CitiesPage() {
-  const { pushWithScrollSave } = useScrollRestoration("cities-list");
-  const [importOpen, setImportOpen] = useState(false);
+export default function LayersPage() {
+  const { pushWithScrollSave } = useScrollRestoration("layers-list");
 
   const [qp, setQp] = useQueryParamsState({
     page: 1,
     perPage: 10,
     search: "",
-    sort: "city",
+    sort: "name",
     order: "asc",
   });
   const { page, perPage, search, sort, order } = qp as unknown as {
@@ -67,10 +65,10 @@ export default function CitiesPage() {
     if (search) sp.set("search", search);
     if (sort) sp.set("sort", sort);
     if (order) sp.set("order", order);
-    return `/api/cities?${sp.toString()}`;
+    return `/api/layers?${sp.toString()}`;
   }, [page, perPage, search, sort, order]);
 
-  const { data, error, isLoading, mutate } = useSWR<CitiesResponse>(
+  const { data, error, isLoading, mutate } = useSWR<LayersResponse>(
     query,
     apiGet
   );
@@ -78,7 +76,7 @@ export default function CitiesPage() {
   const { can } = usePermissions();
 
   if (error) {
-    toast.error((error as Error).message || "Failed to load cities");
+    toast.error((error as Error).message || "Failed to load layers");
   }
 
   function toggleSort(field: string) {
@@ -89,12 +87,26 @@ export default function CitiesPage() {
     }
   }
 
-  const columns: Column<City>[] = [
+  const columns: Column<Layer>[] = [
     {
-      key: "city",
-      header: "City Name",
+      key: "name",
+      header: "Name",
       sortable: true,
       cellClassName: "font-medium whitespace-nowrap",
+    },
+    {
+      key: "ironingRate",
+      header: "Ironing Rate",
+      sortable: true,
+      cellClassName: "whitespace-nowrap",
+      accessor: (r) => Number(r.ironingRate).toFixed(2),
+    },
+    {
+      key: "dryCleaningRate",
+      header: "Dry Cleaning Rate",
+      sortable: true,
+      cellClassName: "whitespace-nowrap",
+      accessor: (r) => Number(r.dryCleaningRate).toFixed(2),
     },
     {
       key: "createdAt",
@@ -110,8 +122,8 @@ export default function CitiesPage() {
 
   async function handleDelete(id: number) {
     try {
-      await apiDelete(`/api/cities/${id}`);
-      toast.success("City deleted");
+      await apiDelete(`/api/layers/${id}`);
+      toast.success("Layer deleted");
       await mutate();
     } catch (e) {
       toast.error((e as Error).message);
@@ -121,16 +133,16 @@ export default function CitiesPage() {
   return (
     <AppCard>
       <AppCard.Header>
-        <AppCard.Title>Cities</AppCard.Title>
-        <AppCard.Description>Manage application cities.</AppCard.Description>
-        {can(PERMISSIONS.CREATE_CITIES) && (
+        <AppCard.Title>Layers</AppCard.Title>
+        <AppCard.Description>Manage laundry layers master data.</AppCard.Description>
+        {can(PERMISSIONS.CREATE_LAYERS) && (
           <AppCard.Action>
             <div className="flex gap-2">
               <AppButton
                 size="sm"
                 iconName="Plus"
                 type="button"
-                onClick={() => pushWithScrollSave("/cities/new")}
+                onClick={() => pushWithScrollSave("/layers/new")}
               >
                 Add
               </AppButton>
@@ -139,10 +151,10 @@ export default function CitiesPage() {
         )}
       </AppCard.Header>
       <AppCard.Content>
-        <FilterBar title="Search & Filter">
+        <FilterBar title="Search">
           <NonFormTextInput
-            aria-label="Search cities"
-            placeholder="Search cities..."
+            aria-label="Search layers"
+            placeholder="Search layers..."
             value={searchDraft}
             onChange={(e) => setSearchDraft(e.target.value)}
             containerClassName="w-full"
@@ -173,29 +185,29 @@ export default function CitiesPage() {
           sort={sortState}
           onSortChange={(s) => toggleSort(s.field)}
           stickyColumns={1}
-          renderRowActions={(city) => {
+          renderRowActions={(s) => {
             if (
-              !can(PERMISSIONS.EDIT_CITIES) &&
-              !can(PERMISSIONS.DELETE_CITIES)
+              !can(PERMISSIONS.EDIT_LAYERS) &&
+              !can(PERMISSIONS.DELETE_LAYERS)
             )
               return null;
             return (
               <div className="flex">
-                {can(PERMISSIONS.EDIT_CITIES) && (
+                {can(PERMISSIONS.EDIT_LAYERS) && (
                   <EditButton
-                    tooltip="Edit City"
-                    aria-label="Edit City"
+                    tooltip="Edit Layer"
+                    aria-label="Edit Layer"
                     onClick={() =>
-                      pushWithScrollSave(`/cities/${city.id}/edit`)
+                      pushWithScrollSave(`/layers/${s.id}/edit`)
                     }
                   />
                 )}
-                {can(PERMISSIONS.DELETE_CITIES) && (
+                {can(PERMISSIONS.DELETE_LAYERS) && (
                   <DeleteButton
-                    onDelete={() => handleDelete(city.id)}
-                    itemLabel="city"
-                    title="Delete city?"
-                    description={`This will permanently remove ${city.city}. This action cannot be undone.`}
+                    onDelete={() => handleDelete(s.id)}
+                    itemLabel="layer"
+                    title="Delete layer?"
+                    description={`This will permanently remove ${s.name}. This action cannot be undone.`}
                   />
                 )}
               </div>
@@ -216,11 +228,6 @@ export default function CitiesPage() {
           disabled={isLoading}
         />
       </AppCard.Footer>
-      <BulkCitiesUploadDialog
-        open={importOpen}
-        onOpenChange={setImportOpen}
-        onUploadSuccess={() => mutate()}
-      />
     </AppCard>
   );
 }

@@ -13,34 +13,33 @@ import { apiPost, apiPatch } from "@/lib/api-client";
 import { toast } from "@/lib/toast";
 import { useRouter } from "next/navigation";
 import { useScrollRestoration } from "@/hooks/use-scroll-restoration";
-import { CreateCityData, UpdateCityData } from "@/types/cities";
 
-export interface CityFormInitialData {
+export interface RemarkFormInitialData {
   id?: number;
-  city?: string;
+  remarkName?: string;
 }
 
-export interface CityFormProps {
+export interface RemarkFormProps {
   mode: "create" | "edit";
-  initial?: CityFormInitialData | null;
+  initial?: RemarkFormInitialData | null;
   onSuccess?: (result?: unknown) => void;
   redirectOnSuccess?: string;
   mutate?: () => Promise<any>;
 }
 
-export function CityForm({
+export function RemarkForm({
   mode,
   initial,
   onSuccess,
-  redirectOnSuccess = "/cities",
+  redirectOnSuccess = "/remarks",
   mutate,
-}: CityFormProps) {
+}: RemarkFormProps) {
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
-  const { backWithScrollRestore } = useScrollRestoration("cities-list");
+  const { backWithScrollRestore } = useScrollRestoration("remarks-list");
 
   const schema = z.object({
-    city: z.string().min(1, "City name is required"),
+    remarkName: z.string().min(1, "Remark name is required"),
   });
 
   type FormValues = z.infer<typeof schema>;
@@ -50,7 +49,7 @@ export function CityForm({
     mode: "onChange",
     reValidateMode: "onChange",
     defaultValues: {
-      city: initial?.city ?? "",
+      remarkName: initial?.remarkName ?? "",
     },
   });
 
@@ -61,19 +60,17 @@ export function CityForm({
     setSubmitting(true);
     try {
       let res;
+      const payload = {
+        remarkName: formData.remarkName,
+      };
+
       if (mode === "create") {
-        const payload: CreateCityData = {
-          city: formData.city,
-        };
-        res = await apiPost("/api/cities", payload);
-        toast.success("City created successfully");
+        res = await apiPost("/api/remarks", payload);
+        toast.success("Remark created successfully");
         onSuccess?.(res);
       } else if (mode === "edit" && initial?.id) {
-        const payload: UpdateCityData = {
-          city: formData.city,
-        };
-        res = await apiPatch(`/api/cities/${initial.id}`, payload);
-        toast.success("City updated successfully");
+        res = await apiPatch(`/api/remarks/${initial.id}`, payload);
+        toast.success("Remark updated successfully");
         onSuccess?.(res);
       }
 
@@ -83,7 +80,7 @@ export function CityForm({
 
       router.push(redirectOnSuccess);
     } catch (err) {
-      toast.error((err as Error).message || "Failed to save city");
+      toast.error((err as Error).message || "Failed to save remark");
     } finally {
       setSubmitting(false);
     }
@@ -94,23 +91,23 @@ export function CityForm({
       <AppCard>
         <AppCard.Header>
           <AppCard.Title>
-            {isCreate ? "Create City" : "Edit City"}
+            {isCreate ? "Create Remark" : "Edit Remark"}
           </AppCard.Title>
           <AppCard.Description>
             {isCreate
-              ? "Add a new city to the master data."
-              : "Update city information."}
+              ? "Add a new remark to the master data."
+              : "Update remark information."}
           </AppCard.Description>
         </AppCard.Header>
         <form noValidate onSubmit={handleSubmit(onSubmit)}>
           <AppCard.Content>
-            <FormSection legend="City Information">
+            <FormSection legend="Remark Information">
               <FormRow cols={1}>
                 <TextInput
                   control={control}
-                  name="city"
-                  label="City Name"
-                  placeholder="Enter city name"
+                  name="remarkName"
+                  label="Remark Name"
+                  placeholder="Enter remark name"
                   required
                 />
               </FormRow>
@@ -132,7 +129,7 @@ export function CityForm({
               isLoading={submitting}
               disabled={submitting || !form.formState.isValid}
             >
-              {isCreate ? "Create City" : "Save Changes"}
+              {isCreate ? "Create Remark" : "Save Changes"}
             </AppButton>
           </AppCard.Footer>
         </form>
@@ -141,4 +138,4 @@ export function CityForm({
   );
 }
 
-export default CityForm;
+export default RemarkForm;

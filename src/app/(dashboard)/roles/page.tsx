@@ -31,7 +31,7 @@ export default function RolesPage() {
   }
 
   const { data, error, isLoading } = useSWR<RolesResponse>(
-    '/api/access-control/roles',
+    can(PERMISSIONS.READ_ROLES) ? '/api/access-control/roles' : null,
     apiGet
   );
   const columns: Column<RoleRow>[] = [

@@ -27,6 +27,11 @@ export default function UserPermissionsPage() {
   const id = params?.id;
 
   const { can } = usePermissions();
+  const hasEditPermission = can(PERMISSIONS.EDIT_USER_PERMISSIONS);
+
+  if (!hasEditPermission) {
+    return <div className='p-4 text-destructive'>Access Denied: Missing {PERMISSIONS.EDIT_USER_PERMISSIONS}</div>;
+  }
 
   const { data: user, error: userError, isLoading: userLoading, mutate: mutateUser } = useSWR<UserPermissionsDetail>(
     id ? `/api/access-control/users/${id}/permissions` : null,
@@ -45,7 +50,7 @@ export default function UserPermissionsPage() {
     setSelected(new Set(user.permissionNames || []));
   }, [user?.id]);
 
-  const savingDisabled = !can(PERMISSIONS.EDIT_ROLES_PERMISSIONS);
+  const savingDisabled = !hasEditPermission;
   const loading = userLoading || permsLoading;
 
   const allPermissions = perms?.data || [];

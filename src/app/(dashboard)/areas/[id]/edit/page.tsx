@@ -10,7 +10,7 @@ export default function EditAreaPage() {
   const params = useParams();
   const id = params.id as string;
 
-  const { data, isLoading } = useSWR<{ data: Area }>(
+  const { data: area, isLoading } = useSWR<Area>(
     id ? `/api/areas/${id}` : null,
     apiGet
   );
@@ -23,7 +23,7 @@ export default function EditAreaPage() {
     );
   }
 
-  if (!data?.data) {
+  if (!area) {
     return (
       <div className="container mx-auto py-6 text-center">
         <h1 className="text-2xl font-bold text-destructive">Area not found</h1>
@@ -36,9 +36,9 @@ export default function EditAreaPage() {
       <AreaForm 
         mode="edit" 
         initial={{
-          id: data.data.id,
-          name: data.data.name,
-          cityId: data.data.cityId
+          id: area.id,
+          name: area.name,
+          cityId: area.cityId
         }} 
       />
     </div>

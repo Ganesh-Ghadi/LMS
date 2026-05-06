@@ -133,7 +133,7 @@ model City {
 
 model Area {
   id        Int      @id @default(autoincrement())
-  name      String
+  name      String   @unique
   cityId    Int
   city      City     @relation(fields: [cityId], references: [id], onDelete: Restrict)
   createdAt DateTime @default(now())

@@ -107,7 +107,7 @@ export async function POST(req: NextRequest) {
       return BadRequest(error.errors);
     }
     if (error.code === 'P2002') {
-      return Error('Area already exists in this city', 409);
+      return Error('Area name already exists', 409);
     }
     console.error("Create area error:", error);
     return Error("Failed to create area");

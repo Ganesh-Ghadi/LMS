@@ -84,7 +84,7 @@ export async function PATCH(req: NextRequest, context: { params: Promise<{ id: s
     }
     if (error.code === 'P2025') return NotFound('Area not found');
     if (error.code === 'P2002') {
-      return Error('Area already exists in this city', 409);
+      return Error('Area name already exists', 409);
     }
     console.error("Update area error:", error);
     return Error("Failed to update area");

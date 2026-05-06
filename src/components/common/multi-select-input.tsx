@@ -148,7 +148,7 @@ export function MultiSelectInput<
         const formItemSpacingClass = size === 'sm' ? 'space-y-1' : 'space-y-2';
 
         return (
-          <FormItem className={cn('col-span-12', formItemSpacingClass, getSpanClasses(), className)}>
+          <FormItem className={cn(formItemSpacingClass, getSpanClasses(), className)}>
             {label && <FormLabel>{label}</FormLabel>}
             <FormControl>
               <div ref={containerRef} className="relative">

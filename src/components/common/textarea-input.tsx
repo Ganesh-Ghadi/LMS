@@ -54,7 +54,7 @@ export function TextareaInput({
 			control={control}
 			name={name}
 			render={({ field }) => (
-				<FormItem className={cn('col-span-12', itemClassName, spanClass)}>
+				<FormItem className={cn(itemClassName, spanClass)}>
 					<FormLabel>
 						{label}
 						{required ? <span className='ml-0.5 text-destructive'>*</span> : null}

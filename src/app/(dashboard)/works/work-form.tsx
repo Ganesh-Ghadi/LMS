@@ -120,7 +120,7 @@ export function WorkForm({
         <form noValidate onSubmit={handleSubmit(onSubmit)}>
           <AppCard.Content>
             <FormSection legend="Work Information">
-              <FormRow cols={2}>
+              <FormRow cols={2} from="md">
                 <TextInput
                   control={control}
                   name="workName"

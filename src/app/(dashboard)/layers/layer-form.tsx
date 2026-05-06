@@ -131,7 +131,7 @@ export function LayerForm({
         <form noValidate onSubmit={handleSubmit(onSubmit)}>
           <AppCard.Content>
             <FormSection legend="Layer Information">
-              <FormRow cols={2}>
+              <FormRow cols={3} from="md">
                 <TextInput
                   control={control}
                   name="name"
@@ -139,14 +139,6 @@ export function LayerForm({
                   placeholder="Enter layer name"
                   required
                 />
-                <TextInput
-                  control={control}
-                  name="description"
-                  label="Description"
-                  placeholder="Enter description (optional)"
-                />
-              </FormRow>
-              <FormRow cols={2}>
                 <TextInput
                   control={control}
                   name="ironingRate"
@@ -168,6 +160,14 @@ export function LayerForm({
                     const result = handleNumericChange(val);
                     return result !== null ? result : form.getValues("dryCleaningRate");
                   }}
+                />
+              </FormRow>
+              <FormRow cols={1}>
+                <TextInput
+                  control={control}
+                  name="description"
+                  label="Description"
+                  placeholder="Enter description (optional)"
                 />
               </FormRow>
             </FormSection>

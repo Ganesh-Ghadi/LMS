@@ -120,7 +120,7 @@ export function FoldingTypeForm({
         <form noValidate onSubmit={handleSubmit(onSubmit)}>
           <AppCard.Content>
             <FormSection legend="Folding Type Information">
-              <FormRow cols={2}>
+              <FormRow cols={2} from="md">
                 <TextInput
                   control={control}
                   name="foldingTypeName"

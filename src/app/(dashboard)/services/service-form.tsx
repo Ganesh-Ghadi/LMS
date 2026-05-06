@@ -120,7 +120,7 @@ export function ServiceForm({
         <form noValidate onSubmit={handleSubmit(onSubmit)}>
           <AppCard.Content>
             <FormSection legend="Service Information">
-              <FormRow cols={2}>
+              <FormRow cols={2} from="md">
                 <TextInput
                   control={control}
                   name="serviceName"

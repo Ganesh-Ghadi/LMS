@@ -249,7 +249,7 @@ export default function UsersPage() {
 					onSortChange={(s) => toggleSort(s.field)}
 					stickyColumns={1}
 					renderRowActions={(u) => {
-						if (!can(PERMISSIONS.EDIT_USERS)) return null;
+						if (!can(PERMISSIONS.EDIT_USER_PERMISSIONS)) return null;
 						return (
 							<div className='flex'>
 								<Link href={`/users/${u.id}/permissions`}>

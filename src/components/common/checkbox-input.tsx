@@ -78,7 +78,7 @@ export function CheckboxInput({
 			control={control}
 			name={name}
 			render={({ field }) => (
-				<FormItem className={cn('col-span-12', spanClass, itemClassName)}>
+				<FormItem className={cn(spanClass, itemClassName)}>
 					<div className="flex items-center space-x-2">
 						<FormControl>
 							<Checkbox

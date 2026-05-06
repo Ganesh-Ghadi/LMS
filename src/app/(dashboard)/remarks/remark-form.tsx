@@ -102,7 +102,7 @@ export function RemarkForm({
         <form noValidate onSubmit={handleSubmit(onSubmit)}>
           <AppCard.Content>
             <FormSection legend="Remark Information">
-              <FormRow cols={1}>
+              <FormRow cols={2} from="md">
                 <TextInput
                   control={control}
                   name="remarkName"
